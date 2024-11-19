@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Preprocessing Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .group-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .options,
+        .explanations {
+            flex: 1;
+        }
+
+        .explanations {
+            border-left: 1px solid #ccc;
+            padding-left: 20px;
+            color: #666;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin: 5px 0;
+        }
+
+        .error {
+            color: red;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .pagination button {
+            padding: 5px 10px;
+        }
+
+        .pagination button.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Text Preprocessing Tool</h1>
+
+        <!-- File Upload -->
+        <form id="uploadForm">
+            <label for="file">Upload CSV:</label>
+            <input type="file" id="file" accept=".csv" required>
+            <button type="submit">Upload</button>
+        </form>
+
+        <div id="preview"></div>
+        <div id="pagination" class="pagination"></div>
+        <div id="error" class="error"></div>
+
+        <!-- Preprocessing Options -->
+        <form id="processForm" style="display:none;">
+            <label for="column">Choose Column:</label>
+            <select id="column" required></select>
+
+            <!-- Step 1: Preliminary Cleaning -->
+            <div class="group-container">
+                <div class="options">
+                    <h3>Step 1: Preliminary Cleaning</h3>
+                    <label><input type="checkbox" id="remove_newlines_tabs"> Remove Newlines and Tabs</label>
+                    <label><input type="checkbox" id="strip_html_tags"> Remove HTML Tags</label>
+                    <label><input type="checkbox" id="remove_links"> Remove Links</label>
+                    <button type="button" onclick="processStep('preliminary_cleaning')">Process</button>
+                </div>
+                <div class="explanations">
+                    <h4>Preliminary Cleaning</h4>
+                    <p>These steps remove noise and prepare the text for further processing.</p>
+                    <ul>
+                        <li><strong>Remove Newlines and Tabs:</strong> Cleans up unnecessary formatting that could
+                            disrupt tokenization or further processing.</li>
+                        <li><strong>Remove HTML Tags:</strong> Ensures that only plain text remains for processing,
+                            critical when dealing with web-scraped data.</li>
+                        <li><strong>Remove Links:</strong> Removes distracting or irrelevant hyperlinks that don’t
+                            contribute to content meaning.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 2: Text Structure Normalization -->
+            <div class="group-container">
+                <div class="options">
+                    <h3>Step 2: Text Structure Normalization</h3>
+                    <label><input type="checkbox" id="remove_whitespace"> Remove Extra Whitespace</label>
+                    <label><input type="checkbox" id="expand_contractions"> Expand Contractions</label>
+                    <button type="button" onclick="processStep('text_normalization')">Process</button>
+                </div>
+                <div class="explanations">
+                    <h4>Text Structure Normalization</h4>
+                    <p>Ensures text is standardized for consistent tokenization.</p>
+                    <ul>
+                        <li><strong>Remove Whitespace:</strong> Combines scattered words into meaningful phrases by
+                            eliminating redundant spaces.</li>
+                        <li><strong>Expand Contractions:</strong> Converts contractions into their full forms to enhance
+                            clarity and align text for tokenization.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 3: Text Simplification -->
+            <div class="group-container">
+                <div class="options">
+                    <h3>Step 3: Text Simplification</h3>
+                    <label><input type="checkbox" id="remove_stopwords"> Remove Stopwords</label>
+                    <label><input type="checkbox" id="lower_casing_text"> Convert to Lowercase</label>
+                    <button type="button" onclick="processStep('text_simplification')">Process</button>
+                </div>
+                <div class="explanations">
+                    <h4>Text Simplification</h4>
+                    <p>Simplifies text by removing unnecessary elements.</p>
+                    <ul>
+                        <li><strong>Remove Stopwords:</strong> Removes commonly used words that do not add significant
+                            meaning to sentences (e.g., "is," "and").</li>
+                        <li><strong>Convert to Lowercase:</strong> Standardizes text by making all characters lowercase,
+                            reducing case sensitivity during processing.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 4: Noise Reduction -->
+            <div class="group-container">
+                <div class="options">
+                    <h3>Step 4: Noise Reduction</h3>
+                    <label><input type="checkbox" id="remove_special_characters"> Remove Special Characters</label>
+                    <label><input type="checkbox" id="accented_characters_removal"> Remove Accented Characters</label>
+                    <button type="button" onclick="processStep('noise_reduction')">Process</button>
+                </div>
+                <div class="explanations">
+                    <h4>Noise Reduction</h4>
+                    <p>Refines the text by removing elements that add no value to meaning or context.</p>
+                    <ul>
+                        <li><strong>Remove Special Characters:</strong> Eliminates symbols and punctuation, retaining
+                            only alphanumeric characters and relevant punctuations.</li>
+                        <li><strong>Remove Accented Characters:</strong> Converts accented letters (e.g., "naïve") to
+                            their ASCII equivalents (e.g., "naive").</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 5: Context Refinement -->
+            <div class="group-container">
+                <div class="options">
+                    <h3>Step 5: Context Refinement</h3>
+                    <label><input type="checkbox" id="spelling_correction"> Correct Spelling</label>
+                    <label><input type="checkbox" id="reducing_character_repetition"> Reduce Character
+                        Repetition</label>
+                    <button type="button" onclick="processStep('context_refinement')">Process</button>
+                </div>
+                <div class="explanations">
+                    <h4>Context Refinement</h4>
+                    <p>Refines text for semantic clarity and correctness.</p>
+                    <ul>
+                        <li><strong>Correct Spelling:</strong> Fixes spelling errors to ensure tokenized text is
+                            meaningful and aligns with the dictionary.</li>
+                        <li><strong>Reduce Character Repetition:</strong> Simplifies text by normalizing repeated
+                            characters (e.g., "coooool" becomes "cool").</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 6: Token and Word-Level Adjustments -->
+            <div class="group-container">
+                <div class="options">
+                    <h3>Step 6: Token and Word-Level Adjustments</h3>
+                    <label><input type="checkbox" id="lemmatization"> Apply Lemmatization</label>
+                    <button type="button" onclick="processStep('token_word_level')">Process</button>
+                </div>
+                <div class="explanations">
+                    <h4>Token and Word-Level Adjustments</h4>
+                    <p>Enhances word-level consistency and simplifies text for NLP tasks.</p>
+                    <ul>
+                        <li><strong>Lemmatization:</strong> Converts words to their root forms, ensuring consistency in
+                            token representation. Example: "running" becomes "run."</li>
+                    </ul>
+                </div>
+            </div>
+
+        </form>
+
+        <div id="result"></div>
+        <a id="downloadLink" style="display:none;" download="cleaned_data.csv">Download Processed File</a>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:5000"; // Update with your backend's URL
+        const uploadForm = document.getElementById('uploadForm');
+        const processForm = document.getElementById('processForm');
+        const previewDiv = document.getElementById('preview');
+        const paginationDiv = document.getElementById('pagination');
+        const errorDiv = document.getElementById('error');
+        const columnSelect = document.getElementById('column');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let uploadedFilePath;
+        let currentPage = 1;
+        let rowsPerPage = 5;
+        let previewRows = [];
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.innerText = ''; // Clear previous errors
+
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file').files[0]);
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/upload`, { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.error) {
+                    errorDiv.innerText = data.error;
+                    return;
+                }
+
+                previewRows = JSON.parse(data.preview);
+                renderTable();
+                setupPagination();
+
+                columnSelect.innerHTML = data.columns.map(col => `<option value="${col}">${col}</option>`).join('');
+                processForm.style.display = 'block';
+                uploadedFilePath = data.file_path;
+            } catch (error) {
+                errorDiv.innerText = "Failed to connect to the server. Ensure the backend is running.";
+                console.error(error);
+            }
+        });
+
+        function renderTable() {
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const rows = previewRows.slice(start, end);
+            const table = `<table>
+                <thead>
+                    <tr>${Object.keys(rows[0]).map(col => `<th>${col}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${rows.map(row => `<tr>${Object.values(row).map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+                </tbody>
+            </table>`;
+            previewDiv.innerHTML = `<h3>Preview:</h3>${table}`;
+        }
+
+        function setupPagination() {
+            const totalPages = Math.ceil(previewRows.length / rowsPerPage);
+            paginationDiv.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.className = i === currentPage ? 'disabled' : '';
+                button.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable();
+                    setupPagination();
+                });
+                paginationDiv.appendChild(button);
+            }
+        }
+
+        async function processStep(step) {
+            errorDiv.innerText = ''; // Clear previous errors
+            const options = {};
+
+            // Collect options based on the step
+            if (step === 'preliminary_cleaning') {
+                options.remove_newlines_tabs = document.getElementById('remove_newlines_tabs').checked;
+                options.strip_html_tags = document.getElementById('strip_html_tags').checked;
+                options.remove_links = document.getElementById('remove_links').checked;
+            } else if (step === 'text_normalization') {
+                options.remove_whitespace = document.getElementById('remove_whitespace').checked;
+                options.expand_contractions = document.getElementById('expand_contractions').checked;
+            } else if (step === 'text_simplification') {
+                options.remove_stopwords = document.getElementById('remove_stopwords').checked;
+                options.lower_casing_text = document.getElementById('lower_casing_text').checked;
+            } else if (step === 'noise_reduction') {
+                options.remove_special_characters = document.getElementById('remove_special_characters').checked;
+                options.accented_characters_removal = document.getElementById('accented_characters_removal').checked;
+            } else if (step === 'context_refinement') {
+                options.spelling_correction = document.getElementById('spelling_correction').checked;
+                options.reducing_character_repetition = document.getElementById('reducing_character_repetition').checked;
+            } else if (step === 'token_word_level') {
+                options.lemmatization = document.getElementById('lemmatization').checked;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/process`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        column: columnSelect.value,
+                        options,
+                        file_path: uploadedFilePath,
+                    }),
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    errorDiv.innerText = data.error;
+                    return;
+                }
+
+                previewRows = JSON.parse(data.preview);
+                renderTable();
+                setupPagination();
+
+                downloadLink.style.display = 'block';
+                downloadLink.href = `${BACKEND_URL}/download?file_path=${encodeURIComponent(data.file_path)}`;
+            } catch (error) {
+                errorDiv.innerText = "Failed to process the file.";
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+
+</html>
